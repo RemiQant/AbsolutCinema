@@ -6,20 +6,38 @@ import (
 	"os"   // New import for os package
 	"time" // New import for time package
 
+	"database/sql"
+
+	_ "github.com/lib/pq"
+
 	"github.com/getsentry/sentry-go"
 	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Load .env file
+	if err := godotenv.Load(); err != nil {
+		fmt.Println("⚠️  No .env file found, using system environment variables")
+	}
+
 	// 1. Initialize Sentry with DSN from Environment
 	dsn := os.Getenv("SENTRY_DSN")
+	if dsn == "" {
+		fmt.Println("⚠️  SENTRY_DSN not set!")
+	} else {
+		fmt.Printf("✅ Sentry DSN loaded: %s...\n", dsn[:40])
+	}
+
 	if err := sentry.Init(sentry.ClientOptions{
 		Dsn: dsn,
 		// Recommended for performance monitoring
 		TracesSampleRate: 1.0,
 	}); err != nil {
 		fmt.Printf("Sentry initialization failed: %v\n", err)
+	} else {
+		fmt.Println("✅ Sentry initialized successfully!")
 	}
 	// IMPORTANT: Ensure Sentry events are sent before the program terminates
 	defer sentry.Flush(2 * time.Second)
@@ -29,6 +47,25 @@ func main() {
 
 	// Once it's done, you can attach the handler as one of your middleware
 	app.Use(sentrygin.New(sentrygin.Options{}))
+
+	// Database connection string
+	dbURL := os.Getenv("DATABASE_URL")
+
+	// Connect to database
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		fmt.Printf("Failed to connect to database: %v\n", err)
+		panic(err)
+	}
+	defer db.Close()
+
+	// Test the connection
+	if err = db.Ping(); err != nil {
+		fmt.Printf("Failed to ping database: %v\n", err)
+		panic(err)
+	} else {
+		fmt.Println("✅ Successfully connected to database!")
+	}
 
 	// Set up routes
 	app.GET("/", func(ctx *gin.Context) {
