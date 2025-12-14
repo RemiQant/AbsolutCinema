@@ -20,10 +20,10 @@ type Server struct {
 }
 
 func NewServer() *http.Server {
-	// Load environment variables based on APP_ENV
-	envFile := utils.GetEnvFile()
-	if err := utils.LoadEnvFile(envFile); err != nil {
-		panic(fmt.Sprintf("Failed to load env file %s: %v", envFile, err))
+	// Load environment variables from .env file if not in Docker
+	if os.Getenv("APP_ENV") == "" || os.Getenv("PORT") == "" {
+		envFile := utils.GetEnvFile()
+		_ = utils.LoadEnvFile(envFile) // Ignore error if file doesn't exist (Docker provides env vars)
 	}
 	// Load PORT from environment variables (dev or prod)
 	portStr := os.Getenv("PORT")

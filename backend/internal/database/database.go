@@ -48,10 +48,10 @@ func New() Service {
 		return dbInstance
 	}
 
-	// Load environment-specific .env file
-	envFile := utils.GetEnvFile()
-	if err := utils.LoadEnvFile(envFile); err != nil {
-		log.Printf("Warning: Could not load %s: %v", envFile, err)
+	// Load environment variables from .env file if not in Docker
+	if os.Getenv("APP_ENV") == "" || os.Getenv("PORT") == "" {
+		envFile := utils.GetEnvFile()
+		_ = utils.LoadEnvFile(envFile) // Ignore error if file doesn't exist (Docker provides env vars)
 	}
 
 	// Get environment variables
