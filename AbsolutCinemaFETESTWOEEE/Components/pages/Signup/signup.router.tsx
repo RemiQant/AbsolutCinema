@@ -5,3 +5,4 @@ const signupRoutes = {
     'path' : '/signup',
     'element' : <Signup />
 }
+export default signupRoutes

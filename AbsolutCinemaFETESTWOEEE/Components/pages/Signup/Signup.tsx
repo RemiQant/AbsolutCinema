@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import api from "../../../src/api/axios";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -8,26 +9,33 @@ const Signup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e : React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e : React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError("");
 
     if (password !== confirmPassword) {
-      alert("Password and confirmation do not match");
+      setError("Password and confirm password does not match!");
       return;
     }
 
-    const payload = {
-      username,
-      email,
-      password,
-      role: "customer",
-    };
+    try {
+      const payload = {
+        username,
+        email,
+        password
+      };
 
-    console.log("Signup payload:", payload);
-
-    // nanti ganti dengan axios.post('/auth/register', payload)
-    navigate("/dashboard");
+      const response = await api.post('/auth/register', payload);
+      console.log("Signup success:", response.data);
+      alert("Account created! Redirecting to login...");
+      navigate("/login");
+    }
+    catch(err:any){
+      console.error("Signup failed:", err.response?.data);
+      setError(err.response?.data?.error || "Signup failed. Try again.");
+    }
   };
 
   return (
@@ -60,6 +68,7 @@ const Signup = () => {
           </p>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
+            {error && <div className="text-red-500 text-sm text-center bg-red-900/20 p-2 rounded">{error}</div>}
             <div>
               <label className="block text-sm text-gray-300 mb-1">
                 Username

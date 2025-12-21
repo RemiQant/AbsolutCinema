@@ -1,13 +1,27 @@
 import React from "react";
 import { NavLink  , useNavigate} from "react-router-dom";
 import { useState , useEffect} from "react";
+import api from "../../../src/api/axios";
 
-const Landing = () => {
-
-  const [user , setUser] = useState<string>("");
-  const [pwd , setPwd] = useState<string>("");
-
+const Login = () => {
+  const [email, setEmail] = useState(""); 
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  const handleLogin = async (e: React.FormEvent) => { // Make it async
+    e.preventDefault(); // STOP THE PAGE REFRESH
+    setError("");
+  
+    try {
+          const response = await api.post('/auth/login', { email, password });
+          console.log("Login success:", response.data);
+          navigate('/dashboard');
+    } catch (err: any) {
+        console.error("Login Error:", err);
+        setError(err.response?.data?.error || "Invalid email or password");
+    }
+  };
 
   return (
     <div
@@ -34,7 +48,8 @@ const Landing = () => {
             Login to continue your cinematic journey
           </p>
 
-          <form className="space-y-5">
+          <form className="space" onSubmit={handleLogin}>
+            {error && <div className="text-red-500 text-center">{error}</div>}
             <div>
               <label className="block text-sm text-gray-300 mb-1">
                 Email
@@ -43,8 +58,8 @@ const Landing = () => {
                 type="email"
                 placeholder="you@example.com"
                 className="w-full bg-black/40 text-white border border-gray-600 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                onChange = {(e) => setUser(e.target.value)}
-                value = {user}
+                onChange = {(e) => setEmail(e.target.value)}
+                value = {email}
                 required
               />
             </div>
@@ -57,16 +72,15 @@ const Landing = () => {
                 type="password"
                 placeholder="••••••••"
                 className="w-full bg-black/40 text-white border border-gray-600 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                onChange = {(e) => setPwd(e.target.value)}
-                value = {pwd}
+                onChange = {(e) => setPassword(e.target.value)}
+                value = {password}
                 required
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-yellow-600 text-black font-semibold py-2.5 rounded-md hover:bg-yellow-500 transition cursor-pointer"
-              onClick = {() => navigate('/dashboard')}
+              className="mt-3.75 w-full bg-yellow-600 text-black font-semibold py-2.5 rounded-md hover:bg-yellow-500 transition cursor-pointer"
             >
               Login
             </button>
@@ -81,4 +95,4 @@ const Landing = () => {
   );
 };
 
-export default Landing;
+export default Login;
