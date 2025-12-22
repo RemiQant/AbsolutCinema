@@ -1,12 +1,14 @@
 import React from "react";
 import { NavLink  , useNavigate} from "react-router-dom";
 import { useState , useEffect} from "react";
+import { useAuth } from "../../../src/context/AuthContext";
 import api from "../../../src/api/axios";
 
 const Login = () => {
   const [email, setEmail] = useState(""); 
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const { login } = useAuth()
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => { // Make it async
@@ -16,6 +18,7 @@ const Login = () => {
     try {
           const response = await api.post('/auth/login', { email, password });
           console.log("Login success:", response.data);
+          login(response.data.user); 
           navigate('/dashboard');
     } catch (err: any) {
         console.error("Login Error:", err);
