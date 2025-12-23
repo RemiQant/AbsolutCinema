@@ -18,7 +18,8 @@ func NewStudioController(service *services.StudioService) *StudioController {
 	return &StudioController{service: service}
 }
 
-// CreateStudio handles POST /api/admin/studios
+// CreateStudio handles
+// POST /api/admin/studios
 func (sc *StudioController) CreateStudio(c *gin.Context) {
 	var studio models.Studio
 	
@@ -43,7 +44,8 @@ func (sc *StudioController) CreateStudio(c *gin.Context) {
 	})
 }
 
-// GetAllStudios handles GET /api/admin/studios
+// GetAllStudios handles
+// GET /api/admin/studios
 func (sc *StudioController) GetAllStudios(c *gin.Context) {
 	studios, err := sc.service.GetAllStudios()
 	if err != nil {
@@ -60,7 +62,8 @@ func (sc *StudioController) GetAllStudios(c *gin.Context) {
 	})
 }
 
-// GetStudioByID handles GET /api/admin/studios/:id
+// GetStudioByID handles
+// GET /api/admin/studios/:id
 func (sc *StudioController) GetStudioByID(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -91,7 +94,8 @@ func (sc *StudioController) GetStudioByID(c *gin.Context) {
 	})
 }
 
-// UpdateStudio handles PUT /api/admin/studios/:id
+// UpdateStudio handles
+// PUT /api/admin/studios/:id
 func (sc *StudioController) UpdateStudio(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -128,7 +132,8 @@ func (sc *StudioController) UpdateStudio(c *gin.Context) {
 	})
 }
 
-// DeleteStudio handles DELETE /api/admin/studios/:id
+// DeleteStudio handles
+// DELETE /api/admin/studios/:id
 func (sc *StudioController) DeleteStudio(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
