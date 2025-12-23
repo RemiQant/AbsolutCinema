@@ -18,7 +18,8 @@ func NewMovieController(service *services.MovieService) *MovieController {
 	return &MovieController{service: service}
 }
 
-// CreateMovie handles POST /api/admin/movies
+// CreateMovie handles
+// POST /api/admin/movies
 func (mc *MovieController) CreateMovie(c *gin.Context) {
 	var movie models.Movie
 	
@@ -43,7 +44,8 @@ func (mc *MovieController) CreateMovie(c *gin.Context) {
 	})
 }
 
-// GetAllMovies handles GET /api/admin/movies
+// GetAllMovies handles
+// GET /api/admin/movies
 func (mc *MovieController) GetAllMovies(c *gin.Context) {
 	movies, err := mc.service.GetAllMovies()
 	if err != nil {
@@ -60,7 +62,8 @@ func (mc *MovieController) GetAllMovies(c *gin.Context) {
 	})
 }
 
-// GetMovieByID handles GET /api/admin/movies/:id
+// GetMovieByID handles
+// GET /api/admin/movies/:id
 func (mc *MovieController) GetMovieByID(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -91,7 +94,8 @@ func (mc *MovieController) GetMovieByID(c *gin.Context) {
 	})
 }
 
-// UpdateMovie handles PUT /api/admin/movies/:id
+// UpdateMovie handles
+// PUT /api/admin/movies/:id
 func (mc *MovieController) UpdateMovie(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -128,7 +132,8 @@ func (mc *MovieController) UpdateMovie(c *gin.Context) {
 	})
 }
 
-// DeleteMovie handles DELETE /api/admin/movies/:id
+// DeleteMovie handles
+// DELETE /api/admin/movies/:id
 func (mc *MovieController) DeleteMovie(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
