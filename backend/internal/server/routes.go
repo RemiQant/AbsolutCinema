@@ -7,7 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"absolutcinema-backend/internal/auth"
+	"absolutcinema-backend/internal/controllers"
 	"absolutcinema-backend/internal/middleware"
+	"absolutcinema-backend/internal/services"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -26,6 +28,14 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	// Initialize auth handler
 	authHandler := auth.NewAuthHandler(s.db.DB())
+	
+	// Initialize services
+	studioService := services.NewStudioService(s.db.DB())
+	movieService := services.NewMovieService(s.db.DB())
+	
+	// Initialize controllers
+	studioController := controllers.NewStudioController(studioService)
+	movieController := controllers.NewMovieController(movieService)
 
 	// API group
 	api := r.Group("/api")
@@ -50,10 +60,25 @@ func (s *Server) RegisterRoutes() http.Handler {
 		// Example: User routes (authenticated users only)
 		protected.GET("/profile", s.getProfileHandler)
 		
-		// Example: Admin-only routes
+		// Admin-only routes for Master Data Management
 		adminRoutes := protected.Group("/admin")
 		adminRoutes.Use(middleware.RequireAdmin())
 		{
+			// Studio CRUD endpoints
+			adminRoutes.POST("/studios", studioController.CreateStudio)
+			adminRoutes.GET("/studios", studioController.GetAllStudios)
+			adminRoutes.GET("/studios/:id", studioController.GetStudioByID)
+			adminRoutes.PUT("/studios/:id", studioController.UpdateStudio)
+			adminRoutes.DELETE("/studios/:id", studioController.DeleteStudio)
+			
+			// Movie CRUD endpoints
+			adminRoutes.POST("/movies", movieController.CreateMovie)
+			adminRoutes.GET("/movies", movieController.GetAllMovies)
+			adminRoutes.GET("/movies/:id", movieController.GetMovieByID)
+			adminRoutes.PUT("/movies/:id", movieController.UpdateMovie)
+			adminRoutes.DELETE("/movies/:id", movieController.DeleteMovie)
+			
+			// Example: User management (keep existing)
 			adminRoutes.GET("/users", s.getAllUsersHandler)
 			adminRoutes.DELETE("/users/:id", s.deleteUserHandler)
 		}
