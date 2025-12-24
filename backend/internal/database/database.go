@@ -61,9 +61,10 @@ func New() Service {
 	port := os.Getenv("DB_PORT")
 	host := os.Getenv("DB_HOST")
 	schema := os.Getenv("DB_SCHEMA")
+	sslMode := os.Getenv("DB_SSLMODE")
 
 	// Create DSN for GORM
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable search_path=%s", host, username, password, database, port, schema)
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s search_path=%s", host, username, password, database, port, sslMode, schema)
 
 	// Configure GORM logger
 	gormLogger := logger.New(
@@ -157,9 +158,6 @@ func (s *service) Health() map[string]string {
 }
 
 // Close closes the database connection.
-// It logs a message indicating the disconnection from the specific database.
-// If the connection is successfully closed, it returns nil.
-// If an error occurs while closing the connection, it returns the error.
 func (s *service) Close() error {
 	log.Printf("Disconnected from database: %s", os.Getenv("DB_DATABASE"))
 	return s.db.Close()

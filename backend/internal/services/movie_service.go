@@ -97,3 +97,19 @@ func (s *MovieService) validateMovie(movie *models.Movie) error {
 	
 	return nil
 }
+
+// GetMovieWithShowtimes retrieves a movie by ID with associated showtimes
+func (s *MovieService) GetMovieWithShowtimes(id uint) (*models.Movie, error) {
+	var movie models.Movie
+	if err := s.db.
+		Preload("Showtimes", func(db *gorm.DB) *gorm.DB {
+			return db.Order("start_time ASC").Preload("Studio")
+		}).
+		First(&movie, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("movie not found")
+		}
+		return nil, err
+	}
+	return &movie, nil
+}

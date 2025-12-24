@@ -114,9 +114,24 @@ func (sc *ShowtimeController) GetAllShowtimes(c *gin.Context) {
 		return
 	}
 
+	// Build response with movie and studio explicitly included
+	response := make([]gin.H, len(showtimes))
+	for i, st := range showtimes {
+		response[i] = gin.H{
+			"id":         st.ID,
+			"movie_id":   st.MovieID,
+			"studio_id":  st.StudioID,
+			"start_time": st.StartTime,
+			"end_time":   st.EndTime,
+			"price":      st.Price,
+			"movie":      st.Movie,
+			"studio":     st.Studio,
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Showtimes retrieved successfully",
-		"data":    showtimes,
+		"data":    response,
 	})
 }
 
@@ -148,7 +163,16 @@ func (sc *ShowtimeController) GetShowtimeByID(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Showtime retrieved successfully",
-		"data":    showtime,
+		"data": gin.H{
+			"id":         showtime.ID,
+			"movie_id":   showtime.MovieID,
+			"studio_id":  showtime.StudioID,
+			"start_time": showtime.StartTime,
+			"end_time":   showtime.EndTime,
+			"price":      showtime.Price,
+			"movie":      showtime.Movie,
+			"studio":     showtime.Studio,
+		},
 	})
 }
 
