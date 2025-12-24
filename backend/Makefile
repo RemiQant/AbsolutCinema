@@ -37,24 +37,6 @@ docker-run-db:
 		docker-compose -f docker-compose.dev.yml --env-file .env.development up psql_bp; \
 	fi
 
-# Create DB container (Production)
-docker-run-prod:
-	@if docker compose -f docker-compose.prod.yml --env-file .env.production up --build 2>/dev/null; then \
-		: ; \
-	else \
-		echo "Falling back to Docker Compose V1"; \
-		docker-compose -f docker-compose.prod.yml --env-file .env.production up --build; \
-	fi
-
-# Shutdown DB container (Production)
-docker-down-prod:
-	@if docker compose -f docker-compose.prod.yml down 2>/dev/null; then \
-		: ; \
-	else \
-		echo "Falling back to Docker Compose V1"; \
-		docker-compose -f docker-compose.prod.yml down; \
-	fi
-
 # Test the application
 test:
 	@echo "Testing..."
@@ -73,13 +55,13 @@ clean:
 # Live Reload
 watch:
 	@if command -v air > /dev/null; then \
-            air; \
+            set -a && source .env.development && set +a && air; \
             echo "Watching...";\
         else \
             read -p "Go's 'air' is not installed on your machine. Do you want to install it? [Y/n] " choice; \
             if [ "$$choice" != "n" ] && [ "$$choice" != "N" ]; then \
                 go install github.com/air-verse/air@latest; \
-                air; \
+                set -a && source .env.development && set +a && air; \
                 echo "Watching...";\
             else \
                 echo "You chose not to install air. Exiting..."; \
@@ -87,4 +69,4 @@ watch:
             fi; \
         fi
 
-.PHONY: all build run test clean watch docker-run docker-down docker-run-prod docker-down-prod itest
+.PHONY: all build run test clean watch docker-run docker-down docker-run-db itest

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-contrib/cors"
@@ -34,10 +35,26 @@ func (s *Server) RegisterRoutes() http.Handler {
 	movieService := services.NewMovieService(s.db.DB())
 	showtimeService := services.NewShowtimeService(s.db.DB())
 	
+	// Initialize payment service (optional - may fail if XENDIT_SECRET_KEY not set)
+	var paymentService *services.PaymentService
+	var err error
+	paymentService, err = services.NewPaymentService()
+	if err != nil {
+		log.Printf("Warning: Payment service initialization failed: %v", err)
+		log.Println("Bookings will be created without payment links")
+		paymentService = nil
+	}
+	
+	// Initialize booking service
+	bookingService := services.NewBookingService(s.db.DB(), paymentService)
+	
 	// Initialize controllers
 	studioController := controllers.NewStudioController(studioService)
 	movieController := controllers.NewMovieController(movieService)
 	showtimeController := controllers.NewShowtimeController(showtimeService)
+	bookingController := controllers.NewBookingController(bookingService)
+	publicController := controllers.NewPublicController(movieService, showtimeService, studioService, bookingService)
+	webhookController := controllers.NewWebhookController(bookingService)
 
 	// API group
 	api := r.Group("/api")
@@ -59,6 +76,28 @@ func (s *Server) RegisterRoutes() http.Handler {
 		{
 			showtimeRoutes.GET("", showtimeController.GetAllShowtimes)       // List with filters
 			showtimeRoutes.GET("/:id", showtimeController.GetShowtimeByID)   // Get single showtime
+			showtimeRoutes.GET("/:id/seats", publicController.GetOccupiedSeats) // Get occupied seats
+		}
+		
+		// Public movie routes (read-only)
+		movieRoutes := api.Group("/movies")
+		{
+			movieRoutes.GET("", publicController.ListMovies)              // List all movies
+			movieRoutes.GET("/:id", publicController.GetMovieDetails)     // Movie details + showtimes
+		}
+		
+		// Public studio routes (read-only for seat layout)
+		studioRoutes := api.Group("/studios")
+		{
+			studioRoutes.GET("/:id", publicController.GetStudioLayout)    // Get studio seat layout
+		}
+
+		// Webhook routes (public but secured by callback token)
+		// IMPORTANT: These routes must NOT have JWT middleware
+		// Security is handled by validating the x-callback-token header
+		webhookRoutes := api.Group("/webhooks")
+		{
+			webhookRoutes.POST("/xendit", webhookController.HandleXenditCallback)
 		}
 	}
 
@@ -68,6 +107,17 @@ func (s *Server) RegisterRoutes() http.Handler {
 	{
 		// Example: User routes (authenticated users only)
 		protected.GET("/profile", s.getProfileHandler)
+		
+		// Booking routes (Customer/Admin)
+		bookingRoutes := protected.Group("/bookings")
+		bookingRoutes.Use(middleware.RequireAdminOrCustomer())
+		{
+			bookingRoutes.GET("", bookingController.GetBookings)                     // List own bookings
+			bookingRoutes.POST("", bookingController.CreateBooking)                  // Create booking
+			bookingRoutes.GET("/:id", bookingController.GetBookingByID)              // Get booking by ID
+			bookingRoutes.DELETE("/:id", bookingController.CancelBooking)            // Cancel booking
+			bookingRoutes.POST("/:id/retry-payment", bookingController.RetryPayment) // Retry payment
+		}
 		
 		// Admin-only routes for Master Data Management
 		adminRoutes := protected.Group("/admin")
@@ -95,14 +145,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 			// Example: User management (keep existing)
 			adminRoutes.GET("/users", s.getAllUsersHandler)
 			adminRoutes.DELETE("/users/:id", s.deleteUserHandler)
-		}
-		
-		// Example: Customer routes
-		customerRoutes := protected.Group("/bookings")
-		customerRoutes.Use(middleware.RequireAdminOrCustomer())
-		{
-			customerRoutes.GET("/", s.getBookingsHandler)
-			customerRoutes.POST("/", s.createBookingHandler)
 		}
 	}
 
@@ -138,17 +180,5 @@ func (s *Server) getAllUsersHandler(c *gin.Context) {
 func (s *Server) deleteUserHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Admin: Delete user",
-	})
-}
-
-func (s *Server) getBookingsHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Get user bookings",
-	})
-}
-
-func (s *Server) createBookingHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Create booking",
 	})
 }
