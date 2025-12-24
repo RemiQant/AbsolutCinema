@@ -1,9 +1,13 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 
+	"github.com/getsentry/sentry-go"
+	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
@@ -14,7 +18,23 @@ import (
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
+	// Initialize Sentry
+	sentryDsn := os.Getenv("SENTRY_DSN")
+	if sentryDsn != "" {
+		if err := sentry.Init(sentry.ClientOptions{
+			Dsn: sentryDsn,
+		}); err != nil {
+			fmt.Printf("Sentry initialization failed: %v\n", err)
+		}
+	} else {
+		log.Println("Sentry DSN not configured, skipping Sentry initialization")
+	}
+
 	r := gin.Default()
+
+	r.Use(sentrygin.New(sentrygin.Options{
+		Repanic: true,
+	}))
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173"}, // Add your frontend URL
@@ -29,12 +49,12 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	// Initialize auth handler
 	authHandler := auth.NewAuthHandler(s.db.DB())
-	
+
 	// Initialize services
 	studioService := services.NewStudioService(s.db.DB())
 	movieService := services.NewMovieService(s.db.DB())
 	showtimeService := services.NewShowtimeService(s.db.DB())
-	
+
 	// Initialize payment service (optional - may fail if XENDIT_SECRET_KEY not set)
 	var paymentService *services.PaymentService
 	var err error
@@ -44,10 +64,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 		log.Println("Bookings will be created without payment links")
 		paymentService = nil
 	}
-	
+
 	// Initialize booking service
 	bookingService := services.NewBookingService(s.db.DB(), paymentService)
-	
+
 	// Initialize controllers
 	studioController := controllers.NewStudioController(studioService)
 	movieController := controllers.NewMovieController(movieService)
@@ -66,30 +86,30 @@ func (s *Server) RegisterRoutes() http.Handler {
 			authRoutes.POST("/login", authHandler.Login)
 			authRoutes.POST("/refresh", authHandler.Refresh)
 			authRoutes.POST("/logout", authHandler.Logout)
-			
+
 			// Protected: Get current user
 			authRoutes.GET("/me", middleware.AuthMiddleware(), authHandler.GetCurrentUser)
 		}
-		
+
 		// Public showtime routes (read-only)
 		showtimeRoutes := api.Group("/showtimes")
 		{
-			showtimeRoutes.GET("", showtimeController.GetAllShowtimes)       // List with filters
-			showtimeRoutes.GET("/:id", showtimeController.GetShowtimeByID)   // Get single showtime
+			showtimeRoutes.GET("", showtimeController.GetAllShowtimes)          // List with filters
+			showtimeRoutes.GET("/:id", showtimeController.GetShowtimeByID)      // Get single showtime
 			showtimeRoutes.GET("/:id/seats", publicController.GetOccupiedSeats) // Get occupied seats
 		}
-		
+
 		// Public movie routes (read-only)
 		movieRoutes := api.Group("/movies")
 		{
-			movieRoutes.GET("", publicController.ListMovies)              // List all movies
-			movieRoutes.GET("/:id", publicController.GetMovieDetails)     // Movie details + showtimes
+			movieRoutes.GET("", publicController.ListMovies)          // List all movies
+			movieRoutes.GET("/:id", publicController.GetMovieDetails) // Movie details + showtimes
 		}
-		
+
 		// Public studio routes (read-only for seat layout)
 		studioRoutes := api.Group("/studios")
 		{
-			studioRoutes.GET("/:id", publicController.GetStudioLayout)    // Get studio seat layout
+			studioRoutes.GET("/:id", publicController.GetStudioLayout) // Get studio seat layout
 		}
 
 		// Webhook routes (public but secured by callback token)
@@ -107,7 +127,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	{
 		// Example: User routes (authenticated users only)
 		protected.GET("/profile", s.getProfileHandler)
-		
+
 		// Booking routes (Customer/Admin)
 		bookingRoutes := protected.Group("/bookings")
 		bookingRoutes.Use(middleware.RequireAdminOrCustomer())
@@ -118,7 +138,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 			bookingRoutes.DELETE("/:id", bookingController.CancelBooking)            // Cancel booking
 			bookingRoutes.POST("/:id/retry-payment", bookingController.RetryPayment) // Retry payment
 		}
-		
+
 		// Admin-only routes for Master Data Management
 		adminRoutes := protected.Group("/admin")
 		adminRoutes.Use(middleware.RequireAdmin())
@@ -129,19 +149,19 @@ func (s *Server) RegisterRoutes() http.Handler {
 			adminRoutes.GET("/studios/:id", studioController.GetStudioByID)
 			adminRoutes.PUT("/studios/:id", studioController.UpdateStudio)
 			adminRoutes.DELETE("/studios/:id", studioController.DeleteStudio)
-			
+
 			// Movie CRUD endpoints
 			adminRoutes.POST("/movies", movieController.CreateMovie)
 			adminRoutes.GET("/movies", movieController.GetAllMovies)
 			adminRoutes.GET("/movies/:id", movieController.GetMovieByID)
 			adminRoutes.PUT("/movies/:id", movieController.UpdateMovie)
 			adminRoutes.DELETE("/movies/:id", movieController.DeleteMovie)
-			
+
 			// Showtime CRUD endpoints (Admin only for CUD operations)
 			adminRoutes.POST("/showtimes", showtimeController.CreateShowtime)
 			adminRoutes.PUT("/showtimes/:id", showtimeController.UpdateShowtime)
 			adminRoutes.DELETE("/showtimes/:id", showtimeController.DeleteShowtime)
-			
+
 			// Example: User management (keep existing)
 			adminRoutes.GET("/users", s.getAllUsersHandler)
 			adminRoutes.DELETE("/users/:id", s.deleteUserHandler)
