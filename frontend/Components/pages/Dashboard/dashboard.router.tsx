@@ -3,6 +3,7 @@ import DashboardLayout from "./DashboardLayout"; // Make sure you renamed the fi
 import MovieGrid from "./MovieGrid";
 import ShowtimeSelection from "./ShowtimeSelection";
 import SeatSelection from "./SeatSelection";
+import PaymentSuccess from "./PaymentSuccess";
 
 export const dashboardRoutes = {
   path: '/dashboard',
@@ -19,6 +20,10 @@ export const dashboardRoutes = {
     {
       path: 'booking/:showtimeId', // /dashboard/booking/55
       element: <SeatSelection />
+    },
+    {
+      path: 'payment-success',
+      element: <PaymentSuccess />
     }
   ]
 };

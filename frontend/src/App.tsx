@@ -5,6 +5,7 @@ import accountRoutes from '../Components/pages/Account/account.router'
 import aboutRoutes from '../Components/pages/About/about.router'
 import loginRoutes from '../Components/pages/Login/login.router'
 import signUpRoutes from '../Components/pages/Signup/signup.router'
+import adminRoutes from '../Components/pages/Admin/admin.router'
 
 import './App.css'
 
@@ -13,6 +14,7 @@ const routes = createBrowserRouter([
   aboutRoutes,
   dashboardRoutes,
   signUpRoutes,
+  adminRoutes,
   ...loginRoutes
 ])
 

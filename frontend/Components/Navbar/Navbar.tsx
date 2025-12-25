@@ -30,7 +30,7 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex space-x-6">
-            <NavLink to="/dashboard" className= "text-gray-200 hover:text-yellow-500 active:text-yellow-500">
+            <NavLink to="/dashboard" className={activePage}>
               Home
             </NavLink>
 
