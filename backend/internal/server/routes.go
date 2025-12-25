@@ -37,10 +37,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 	}))
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"}, // Add your frontend URL
+		AllowOrigins:     []string{"http://localhost:5173", "https://absolut-cinema.vercel.app"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Accept", "Authorization", "Content-Type"},
-		AllowCredentials: true, // Enable cookies/auth
+		AllowCredentials: true,
 	}))
 
 	// Public routes
