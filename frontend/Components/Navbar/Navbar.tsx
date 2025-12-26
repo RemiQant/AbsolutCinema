@@ -26,7 +26,7 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
 
           <div className="flex text-xl font-bold text-yellow-500 gap-4">
-            AbsolutCinema <img src="../../public/Logo/LogoAbsolutCinema.png" className="w-8 rounded" />
+            AbsolutCinema <img src= "/Logo/LogoAbsolutCinema.png" className="w-8 rounded" />
           </div>
 
           <div className="hidden md:flex space-x-6">

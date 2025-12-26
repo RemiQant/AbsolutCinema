@@ -38,7 +38,7 @@ const Login = () => {
 
       <div className="absolute top-8 left-10 z-10">
         <h1 className="flex gap-4 text-3xl font-extrabold tracking-wide text-yellow-500">
-          AbsolutCinema  <img src="../public/Logo/LogoAbsolutCinema.png" className="w-12 rounded" />
+          AbsolutCinema  <img src="/Logo/LogoAbsolutCinema.png" className="w-12 rounded" />
         </h1>
       </div>
 
