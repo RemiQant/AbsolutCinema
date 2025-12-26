@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../api/axios';
 
-// Define what our User looks like (matching the backend response)
 interface User {
   id: string;
   username: string;
@@ -9,7 +8,6 @@ interface User {
   role: string;
 }
 
-// Define what the Context looks like
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -23,22 +21,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Check if user is logged in when the app starts
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // This endpoint requires the cookie we set earlier!
-        const response = await api.get('/auth/me'); 
-        setUser(response.data.user);
-      } catch (err) {
-        // If 401 Unauthorized, just set user to null (not logged in)
+  // Fungsi utama untuk memverifikasi session
+  const verifyAuth = async () => {
+    try {
+      // 1. Coba ambil data user (Backend validasi access token)
+      const response = await api.get('/auth/me');
+      setUser(response.data.user);
+    } catch (err: any) {
+      // 2. ELSE (401): Jika access token tidak valid/expired
+      if (err.response?.status === 401) {
+        try {
+          // 3. Frontend triggers refresh flow
+          await api.post('/auth/refresh');
+          
+          // 4. Retry original request (Ambil data user lagi setelah refresh)
+          const retryResponse = await api.get('/auth/me');
+          setUser(retryResponse.data.user);
+        } catch (refreshErr) {
+          // Jika refresh token juga expired/gagal
+          setUser(null);
+        }
+      } else {
         setUser(null);
-      } finally {
-        setLoading(false);
       }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    checkAuth();
+  useEffect(() => {
+    verifyAuth();
   }, []);
 
   const login = (userData: User) => {
@@ -48,24 +60,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = async () => {
     try {
       await api.post('/auth/logout');
-      setUser(null);
     } catch (err) {
       console.error("Logout failed", err);
+    } finally {
+      setUser(null);
     }
   };
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout }}>
-      {children}
+      {/* Tahan render UI sampai verifikasi selesai agar tidak ada 'flicker' */}
+      {!loading ? (
+        children
+      ) : (
+        <div className="flex h-screen items-center justify-center bg-black text-yellow-500">
+          <p className="animate-pulse font-bold">VERIFYING SESSION...</p>
+        </div>
+      )}
     </AuthContext.Provider>
   );
 };
 
-// Custom hook to use the context easily
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };

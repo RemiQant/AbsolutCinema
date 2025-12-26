@@ -5,6 +5,12 @@ import { movies as mockMovies } from '../Dashboard/mockData';
 const AdminMovies: React.FC = () => {
   const [movies, setMovies] = useState(mockMovies);
 
+  const [nowPlayingMovies, setNowPlayingMovies] = useState();
+
+  const fetchMovies = () => {
+    
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
