@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import api from "../../../src/api/axios";
+import logo from "../../../public/Logo/LogoAbsolutCinema.png";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -52,7 +53,7 @@ const Signup = () => {
         <h1 className="flex gap-4 text-3xl font-extrabold tracking-wide text-yellow-500">
           AbsolutCinema
           <img
-            src="/Logo/LogoAbsolutCinema.png"
+            src={logo}
             className="w-12 rounded"
           />
         </h1>
