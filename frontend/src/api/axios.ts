@@ -1,7 +1,8 @@
 import axios from 'axios';
 
+const BASE_URL = 'https://absolut-cinema-umwih.ondigitalocean.app/api';
 const api = axios.create({
-    baseURL: 'http://localhost:8080/api', 
+    baseURL: BASE_URL,
     withCredentials: true, 
     headers: {
         'Content-Type': 'application/json',
