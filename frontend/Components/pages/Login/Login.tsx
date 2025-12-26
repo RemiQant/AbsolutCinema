@@ -3,6 +3,7 @@ import { NavLink  , useNavigate} from "react-router-dom";
 import { useState , useEffect} from "react";
 import { useAuth } from "../../../src/context/AuthContext";
 import api from "../../../src/api/axios";
+import logo from "../../../public/Logo/LogoAbsolutCinema.png";
 
 const Login = () => {
   const [email, setEmail] = useState(""); 
@@ -38,7 +39,7 @@ const Login = () => {
 
       <div className="absolute top-8 left-10 z-10">
         <h1 className="flex gap-4 text-3xl font-extrabold tracking-wide text-yellow-500">
-          AbsolutCinema  <img src="/Logo/LogoAbsolutCinema.png" className="w-12 rounded" />
+          AbsolutCinema  <img src={logo}className="w-12 rounded" />
         </h1>
       </div>
 
