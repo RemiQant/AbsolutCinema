@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { type Seat } from './types';
 import api from '../../../src/api/axios';
+import { type Seat } from './types';
 
 interface ShowtimeDetails {
   id: number;
   price: number;
   start_time: string;
+  end_time: string;
   studio: {
     name: string;
     total_rows: number;
@@ -28,49 +29,55 @@ const SeatSelection: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
 
-  // 1. FETCH DATA FROM BACKEND
   useEffect(() => {
-      const fetchData = async () => {
-        try {
-          if (!showtimeId) return;
+    const fetchData = async () => {
+      try {
+        if (!showtimeId) return;
 
-          // A. Get Showtime Details (Price, Studio Layout, Movie Info)
-          const showtimeRes = await api.get(`/showtimes/${showtimeId}`);
-          const showtimeData = showtimeRes.data.data; // Adjust based on your API wrapper
-          setShowtime(showtimeData);
+        // 1. Get Showtime Details
+        const showtimeRes = await api.get(`/showtimes/${showtimeId}`);
+        const showtimeData = showtimeRes.data.data;
+        setShowtime(showtimeData);
 
-          // B. Get Occupied Seats
-          const occupiedRes = await api.get(`/showtimes/${showtimeId}/seats`);
-          const occupiedSeats: string[] = occupiedRes.data.data || []; // Array of strings like ["A1", "B5"]
-
-          // C. Generate Seat Grid
-          const rows = Array.from({ length: showtimeData.studio.total_rows }, (_, i) => String.fromCharCode(65 + i));
-          
-          const generatedSeats = rows.flatMap(row =>
-            Array.from({ length: showtimeData.studio.total_cols }, (_, i) => {
-              const seatId = `${row}${i + 1}`;
-              return {
-                id: seatId,
-                row,
-                number: i + 1,
-                // Check if seat is in the occupied list from DB
-                status: occupiedSeats.includes(seatId) ? 'booked' : 'available'
-              } as Seat;
-            })
-          );
-          setSeats(generatedSeats);
-          setLoading(false);
-
-        } catch (error) {
-          console.error("Failed to fetch data:", error);
-          alert("Failed to load seat data. Are you connected?");
-          navigate('/dashboard');
+        // 2. Get Occupied Seats (FIXED CRASH LOGIC)
+        const occupiedRes = await api.get(`/showtimes/${showtimeId}/seats`);
+        const rawData = occupiedRes.data.data;
+        
+        // SAFEGUARD: Force it to be an array so .includes() never crashes
+        let occupiedSeats: string[] = [];
+        if (Array.isArray(rawData)) {
+            occupiedSeats = rawData;
+        } else if (rawData && Array.isArray(rawData.occupied_seats)) {
+            occupiedSeats = rawData.occupied_seats;
         }
-      };
-    fetchData();
-  }, [showtimeId, navigate]);
 
-  // 2. HANDLE CLICK
+        // 3. Generate Seat Grid
+        const rows = Array.from({ length: showtimeData.studio.total_rows }, (_, i) => String.fromCharCode(65 + i));
+        
+        const generatedSeats = rows.flatMap(row =>
+          Array.from({ length: showtimeData.studio.total_cols }, (_, i) => {
+            const seatId = `${row}${i + 1}`; // <--- BACKTICKS ARE IMPORTANT HERE
+            return {
+              id: seatId,
+              row,
+              number: i + 1,
+              status: occupiedSeats.includes(seatId) ? 'booked' : 'available'
+            } as Seat;
+          })
+        );
+        setSeats(generatedSeats);
+        setLoading(false);
+
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+        alert("Failed to load seat data. Check console!");
+        // Don't navigate away automatically so you can debug
+      }
+    };
+
+    fetchData();
+  }, [showtimeId]); // Removed 'navigate' from deps to prevent loop
+
   const handleSeatClick = (seatId: string) => {
     setSeats(prev => prev.map(seat => {
       if (seat.id === seatId && seat.status !== 'booked') {
@@ -79,7 +86,7 @@ const SeatSelection: React.FC = () => {
       return seat;
     }));
   };
-// 3. HANDLE BOOKING (THE MONEY MAKER 💸)
+
   const handleCheckout = async () => {
     const selectedSeats = seats.filter(s => s.status === 'selected');
     if (selectedSeats.length === 0) return;
@@ -88,16 +95,13 @@ const SeatSelection: React.FC = () => {
     try {
       const payload = {
         showtime_id: Number(showtimeId),
-        seat_numbers: selectedSeats.map(s => s.id) // ["A1", "A2"]
+        seat_numbers: selectedSeats.map(s => s.id)
       };
 
-      // Call the Create Booking Endpoint
       const response = await api.post('/bookings', payload);
-      
       const { payment_url } = response.data;
 
       if (payment_url) {
-        // Redirect to Xendit
         window.location.href = payment_url;
       } else {
         alert("Booking created, but no payment link returned?");
@@ -119,7 +123,7 @@ const SeatSelection: React.FC = () => {
     }
   };
 
-  if (loading || !showtime) return <div className="text-white p-10">Loading Cinema...</div>;
+  if (loading || !showtime) return <div className="text-white p-10 text-center">Loading Cinema...</div>;
 
   const selectedSeats = seats.filter(s => s.status === 'selected');
   const totalPrice = selectedSeats.length * showtime.price;
@@ -128,26 +132,25 @@ const SeatSelection: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto px-6 py-8 text-white">
       <button
-        onClick={() => navigate(`/dashboard/movie/${showtime.movie.id}`)} // Go back to specific movie
+        onClick={() => navigate(`/dashboard/movie/${showtime.movie.id}`)}
         className="flex items-center gap-2 text-gray-400 hover:text-yellow-500 mb-6 transition-colors cursor-pointer"
       >
         <ArrowLeft size={20} />
-        Back to Showtimes
+        Back to Movie
       </button>
 
-     {/* MOVIE INFO HEADER */}
+      {/* HEADER */}
       <div className="bg-zinc-900 rounded-lg p-6 mb-8 border border-yellow-600/20">
         <h2 className="text-2xl font-bold mb-2 text-yellow-500">{showtime.movie.title}</h2>
         <div className="flex gap-6 text-sm text-gray-400">
           <p>Studio: <span className="text-white">{showtime.studio.name}</span></p>
-          <p>Time: <span className="text-white">{new Date(showtime.start_time || "").toLocaleTimeString()}</span></p>
+          <p>Time: <span className="text-white">{new Date(showtime.start_time).toLocaleTimeString()}</span></p>
           <p>Price: <span className="text-white">Rp {showtime.price.toLocaleString('id-ID')}</span></p>
         </div>
       </div>
 
-      {/* SCREEN & SEATS */}
+      {/* SCREEN */}
       <div className="flex flex-col items-center overflow-x-auto pb-4">
-        {/* Seat Numbers Header */}
         <div className="flex items-center gap-2 mb-4">
           <div className="w-10" /> 
           {Array.from({ length: showtime.studio.total_cols }, (_, i) => (
@@ -155,7 +158,6 @@ const SeatSelection: React.FC = () => {
           ))}
         </div>
 
-            {/* Rows */}
         <div className="space-y-3">
           {rowLetters.map(row => (
             <div key={row} className="flex items-center justify-center gap-2">
@@ -178,15 +180,14 @@ const SeatSelection: React.FC = () => {
             </div>
           ))}
         </div>
-
-        {/* Screen Indicator */}
+        
         <div className="mt-12 w-full max-w-md mx-auto">
-          <div className="h-1 bg-gradient-to-r from-transparent via-yellow-500 to-transparent rounded-full shadow-[0_4px_20px_rgba(234,179,8,0.5)]" />
-          <p className="text-center text-xs text-zinc-500 mt-2 tracking-[0.2em] uppercase">Screen</p>
+           <div className="h-1 bg-gradient-to-r from-transparent via-yellow-500 to-transparent rounded-full shadow-[0_4px_20px_rgba(234,179,8,0.5)]" />
+           <p className="text-center text-xs text-zinc-500 mt-2 tracking-[0.2em] uppercase">Screen</p>
         </div>
       </div>
 
-      {/* FOOTER / CHECKOUT */}
+      {/* FOOTER */}
       <div className="mt-8 bg-zinc-900 rounded-xl p-6 border border-zinc-800 flex justify-between items-center sticky bottom-4 shadow-2xl">
         <div>
             <p className="text-gray-400 text-sm mb-1">Total Price</p>
@@ -207,7 +208,7 @@ const SeatSelection: React.FC = () => {
         </button>
       </div>
     </div>
-  );
+  );  
 };
 
 export default SeatSelection;
