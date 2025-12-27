@@ -9,7 +9,6 @@ interface MovieDetail {
   description: string;
   poster_url: string;
   duration_minutes: number;
-  genre: string;
 }
 
 interface Showtime {
@@ -79,7 +78,7 @@ const ShowtimeSelection: React.FC = () => {
             <div className="md:col-span-2">
                <h1 className="text-4xl font-bold text-yellow-500 mb-4">{movie.title}</h1>
                <div className="flex gap-3 mb-6">
-                 <span className="px-3 py-1 bg-zinc-800 rounded-full text-xs font-bold text-zinc-400">{movie.genre}</span>
+               
                  <span className="px-3 py-1 bg-zinc-800 rounded-full text-xs font-bold text-zinc-400">{movie.duration_minutes} Mins</span>
                </div>
                <p className="text-gray-300 leading-relaxed text-lg">{movie.description}</p>
