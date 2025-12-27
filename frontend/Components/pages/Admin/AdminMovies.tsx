@@ -102,12 +102,6 @@ const AdminMovies: React.FC = () => {
 
   if (loading) return <div className="flex h-64 items-center justify-center"><Loader2 className="animate-spin text-yellow-500" size={40} /></div>;
 
-  const [nowPlayingMovies, setNowPlayingMovies] = useState();
-
-  const fetchMovies = () => {
-    
-  }
-
   return (
     <div className="relative">
       <div className="flex justify-between items-center mb-8">
