@@ -15,8 +15,8 @@ var (
 	refreshTokenSecret = []byte(getEnv("JWT_REFRESH_SECRET"))
 
 	// Token durations
-	accessTokenDuration  = 15 * time.Minute   // 15 minutes
-	refreshTokenDuration = 7 * 24 * time.Hour // 7 days
+	accessTokenDuration  = 7 * 24 * time.Hour   // 7 days
+	refreshTokenDuration = 14 * 24 * time.Hour // 14 days
 )
 
 // JWTClaims represents the claims stored in JWT tokens
