@@ -162,6 +162,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 			// Showtime CRUD endpoints (Admin only for CUD operations)
 			adminRoutes.POST("/showtimes", showtimeController.CreateShowtime)
+			adminRoutes.GET("/showtimes", showtimeController.GetAllShowtimes)
 			adminRoutes.PUT("/showtimes/:id", showtimeController.UpdateShowtime)
 			adminRoutes.DELETE("/showtimes/:id", showtimeController.DeleteShowtime)
 

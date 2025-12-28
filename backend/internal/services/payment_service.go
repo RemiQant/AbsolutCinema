@@ -197,16 +197,16 @@ func buildInvoiceItems(booking *models.Booking) []invoice.InvoiceItem {
 func getSuccessRedirectURL() string {
 	baseURL := os.Getenv("FRONTEND_URL")
 	if baseURL == "" {
-		baseURL = "http://localhost:5173"
+		baseURL = "https://absolut-cinema-umwih.ondigitalocean.app" 
 	}
-	return baseURL + "/booking/success"
+	return baseURL + "/booking/success"   
 }
 
 // getFailureRedirectURL returns the URL to redirect after failed payment
 func getFailureRedirectURL() string {
 	baseURL := os.Getenv("FRONTEND_URL")
 	if baseURL == "" {
-		baseURL = "http://localhost:5173"
+		baseURL = "https://absolut-cinema-umwih.ondigitalocean.app"
 	}
 	return baseURL + "/booking/failed"
 }
