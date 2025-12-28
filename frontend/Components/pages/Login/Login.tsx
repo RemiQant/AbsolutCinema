@@ -4,6 +4,7 @@ import { useState , useEffect} from "react";
 import { useAuth } from "../../../src/context/AuthContext";
 import api from "../../../src/api/axios";
 import logo from "../../../public/Logo/LogoAbsolutCinema.png";
+import Cookies from "js-cookie";
 
 const Login = () => {
   const [email, setEmail] = useState(""); 
@@ -12,20 +13,29 @@ const Login = () => {
   const { login } = useAuth()
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.FormEvent) => { // Make it async
-    e.preventDefault(); // STOP THE PAGE REFRESH
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError("");
   
     try {
-          const response = await api.post('/auth/login', { email, password });
-          console.log("Login success:", response.data);
-          login(response.data.user); 
-          navigate('/dashboard');
+        const response = await api.post('/auth/login', { email, password });
+        console.log("Login success:", response.data);
+
+        // 2. Ambil data user dan role dari response backend
+        const user = response.data.user; 
+        const role = user.role; // Pastikan backend mengirim field 'role'
+
+        // 3. SIMPAN ROLE KE COOKIE agar AdminGuard bisa membacanya
+        // expires: 1 artinya cookie tahan 1 hari
+        Cookies.set('role', role, { expires: 1 });
+
+        login(user); 
+        navigate('/dashboard');
     } catch (err: any) {
         console.error("Login Error:", err);
         setError(err.response?.data?.error || "Invalid email or password");
     }
-  };
+};
 
   return (
     <div

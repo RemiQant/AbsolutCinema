@@ -1,95 +1,96 @@
 import React, { useEffect, useState } from 'react';
-import { Check, Home, ArrowRight } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import api from '../../../src/api/axios'; 
-
-interface BookingData {
-  id: string;
-  tickets: Array<{
-    seat_number: string;
-    showtime: {
-        movie: { title: string };
-        studio: { name: string };
-    }
-  }>;
-}
+import { Check, Home, Ticket } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const PaymentSuccess: React.FC = () => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  // Xendit might return ?id=... or ?external_id=... check your Xendit settings
-  // Assuming Xendit redirects with external_id (which is our booking ID)
-  const bookingId = searchParams.get('external_id') || searchParams.get('id');
+    const navigate = useNavigate();
+    const [booking, setBooking] = useState<any>(null);
 
-  const [booking, setBooking] = useState<BookingData | null>(null);
-  const [loading, setLoading] = useState(true);
+    useEffect(() => {
+        // Ambil snapshot data yang kita simpan di SeatSelection
+        const savedData = localStorage.getItem('last_successful_booking');
+        if (savedData) {
+            setBooking(JSON.parse(savedData));
+        }
+    }, []);
 
-  useEffect(() => {
-    const fetchBooking = async () => {
-      if (!bookingId) {
-          setLoading(false);
-          return;
-      }
-      try {
-        const res = await api.get(`/bookings/${bookingId}`);
-        setBooking(res.data.data);
-      } catch (err) {
-        console.error("Failed to fetch receipt", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Gunakan data snapshot, jika tidak ada baru pakai Unknown
+    const movieTitle = booking?.movieTitle || "Movie Confirmed";
+    const studioName = booking?.studioName || "Cinema Studio";
+    const seatList = booking?.seats || "Confirmed";
+    const bookingId = booking?.bookingId || "-------";
+    
+    const formattedDate = booking?.startTime 
+        ? new Date(booking.startTime).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+        : "Today";
+    const formattedTime = booking?.startTime 
+        ? new Date(booking.startTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+        : "--:--";
 
-    fetchBooking();
-  }, [bookingId]);
+    return (
+        <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-6">
+            <div className="w-full max-w-md bg-zinc-900/50 border border-zinc-800 rounded-[2.5rem] overflow-hidden shadow-2xl">
+                <div className="p-8 pb-4 text-center">
+                    <div className="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_40px_rgba(234,179,8,0.3)]">
+                        <Check size={40} className="text-black stroke-[3px]" />
+                    </div>
+                    <h1 className="text-2xl font-black uppercase italic tracking-tighter text-yellow-500">Success!</h1>
+                    <p className="text-zinc-500 text-sm mt-2 font-medium italic">Enjoy your movie absolute.</p>
+                </div>
 
-  if (loading) return <div className="text-white text-center p-10">Verifying Payment...</div>;
+                <div className="px-8 pb-8">
+                    <div className="bg-black/40 border border-zinc-800/50 rounded-3xl p-6 space-y-5 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 opacity-10">
+                            <Ticket size={120} className="rotate-12 text-yellow-500" />
+                        </div>
 
-  // Derive display data from the first ticket (since all tickets in a booking are same movie/studio)
-  const firstTicket = booking?.tickets[0];
-  const movieTitle = firstTicket?.showtime.movie.title || "Unknown Movie";
-  const studioName = firstTicket?.showtime.studio.name || "Unknown Studio";
-  const seatList = booking?.tickets.map(t => t.seat_number).join(", ") || "N/A";
+                        <div className="space-y-1 relative z-10">
+                            <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Movie Title</span>
+                            <p className="text-lg font-bold leading-tight uppercase ">{movieTitle}</p>
+                        </div>
 
-  return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-6">
-      <div className="w-full max-w-sm p-8 rounded-3xl bg-zinc-900/40 border border-zinc-800 text-center">
-        
-        <div className="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(234,179,8,0.2)]">
-          <Check size={40} className="text-black stroke-[3px]" />
+                        <div className="grid grid-cols-2 gap-4 relative z-10">
+                            <div className="space-y-1">
+                                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Studio</span>
+                                <p className="text-sm font-semibold">{studioName}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Seats</span>
+                                <p className="text-sm font-bold text-yellow-500 uppercase">{seatList}</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 relative z-10">
+                            <div className="space-y-1">
+                                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Date</span>
+                                <p className="text-sm font-semibold">{formattedDate}</p>
+                            </div>
+                            <div className="space-y-1">
+                                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Time</span>
+                                <p className="text-sm font-semibold">{formattedTime}</p>
+                            </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-zinc-800 flex justify-between items-center opacity-50 italic">
+                            <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Ref ID</span>
+                            <span className="text-xs font-mono">#{bookingId.slice(0, 8).toUpperCase()}</span>
+                        </div>
+                    </div>
+
+                    <button 
+                        onClick={() => {
+                            localStorage.removeItem('last_successful_booking');
+                            navigate('/dashboard');
+                        }}
+                        className="w-full mt-8 bg-white hover:bg-yellow-500 text-black font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-3"
+                    >
+                        <Home size={20} />
+                        BACK TO HOME
+                    </button>
+                </div>
+            </div>
         </div>
-
-        <h1 className="text-2xl font-bold uppercase tracking-tight mb-2 ">Payment Absolute.</h1>
-        <p className="text-zinc-500 text-sm mb-8">Transaksi berhasil. Sampai jumpa di bioskop!</p>
-
-        {/* DYNAMIC RECEIPT */}
-        <div className="bg-black/40 rounded-2xl p-6 mb-8 space-y-4 border border-zinc-800/50">
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-zinc-500 uppercase tracking-widest text-[10px] font-bold">Movie</span>
-            <span className="font-semibold">{movieTitle}</span>
-          </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-zinc-500 uppercase tracking-widest text-[10px] font-bold">Seats</span>
-            <span className="text-yellow-500 font-bold tracking-widest">{seatList}</span>
-          </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-zinc-500 uppercase tracking-widest text-[10px] font-bold">Studio</span>
-            <span className="font-semibold">{studioName}</span>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <button 
-            onClick={() => navigate('/dashboard')}
-            className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2"
-          >
-            <Home size={18} />
-            BACK TO HOME
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default PaymentSuccess;
