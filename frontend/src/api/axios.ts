@@ -1,11 +1,9 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://absolut-cinema-umwih.ondigitalocean.app/api';
-const LOCAL_URL = 'http://localhost:8080/api';
-
-// Use production URL in production, localhost in development
+// In production, use relative path since frontend and backend are on same domain
+// In development, use full localhost URL
 const api = axios.create({
-    baseURL: import.meta.env.MODE === 'production' ? BASE_URL : LOCAL_URL,
+    baseURL: import.meta.env.MODE === 'production' ? '/api' : 'http://localhost:8080/api',
     withCredentials: true, 
     headers: {
         'Content-Type': 'application/json',
