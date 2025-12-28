@@ -80,53 +80,52 @@ func (s *Server) RegisterRoutes() http.Handler {
 	publicController := controllers.NewPublicController(movieService, showtimeService, studioService, bookingService)
 	webhookController := controllers.NewWebhookController(bookingService)
 
-	// API group
-	api := r.Group("/api")
+	// Note: DigitalOcean routes /api/* to this backend, so we don't need /api prefix here
+	// Routes are defined from root since DO strips the /api prefix
+
+	// Auth routes (public)
+	authRoutes := r.Group("/auth")
 	{
-		// Auth routes (public)
-		authRoutes := api.Group("/auth")
-		{
-			authRoutes.POST("/register", authHandler.Register)
-			authRoutes.POST("/login", authHandler.Login)
-			authRoutes.POST("/refresh", authHandler.Refresh)
-			authRoutes.POST("/logout", authHandler.Logout)
+		authRoutes.POST("/register", authHandler.Register)
+		authRoutes.POST("/login", authHandler.Login)
+		authRoutes.POST("/refresh", authHandler.Refresh)
+		authRoutes.POST("/logout", authHandler.Logout)
 
-			// Protected: Get current user
-			authRoutes.GET("/me", middleware.AuthMiddleware(), authHandler.GetCurrentUser)
-		}
+		// Protected: Get current user
+		authRoutes.GET("/me", middleware.AuthMiddleware(), authHandler.GetCurrentUser)
+	}
 
-		// Public showtime routes (read-only)
-		showtimeRoutes := api.Group("/showtimes")
-		{
-			showtimeRoutes.GET("", showtimeController.GetAllShowtimes)          // List with filters
-			showtimeRoutes.GET("/:id", showtimeController.GetShowtimeByID)      // Get single showtime
-			showtimeRoutes.GET("/:id/seats", publicController.GetOccupiedSeats) // Get occupied seats
-		}
+	// Public showtime routes (read-only)
+	showtimeRoutes := r.Group("/showtimes")
+	{
+		showtimeRoutes.GET("", showtimeController.GetAllShowtimes)          // List with filters
+		showtimeRoutes.GET("/:id", showtimeController.GetShowtimeByID)      // Get single showtime
+		showtimeRoutes.GET("/:id/seats", publicController.GetOccupiedSeats) // Get occupied seats
+	}
 
-		// Public movie routes (read-only)
-		movieRoutes := api.Group("/movies")
-		{
-			movieRoutes.GET("", publicController.ListMovies)          // List all movies
-			movieRoutes.GET("/:id", publicController.GetMovieDetails) // Movie details + showtimes
-		}
+	// Public movie routes (read-only)
+	movieRoutes := r.Group("/movies")
+	{
+		movieRoutes.GET("", publicController.ListMovies)          // List all movies
+		movieRoutes.GET("/:id", publicController.GetMovieDetails) // Movie details + showtimes
+	}
 
-		// Public studio routes (read-only for seat layout)
-		studioRoutes := api.Group("/studios")
-		{
-			studioRoutes.GET("/:id", publicController.GetStudioLayout) // Get studio seat layout
-		}
+	// Public studio routes (read-only for seat layout)
+	studioRoutes := r.Group("/studios")
+	{
+		studioRoutes.GET("/:id", publicController.GetStudioLayout) // Get studio seat layout
+	}
 
-		// Webhook routes (public but secured by callback token)
-		// IMPORTANT: These routes must NOT have JWT middleware
-		// Security is handled by validating the x-callback-token header
-		webhookRoutes := api.Group("/webhooks")
-		{
-			webhookRoutes.POST("/xendit", webhookController.HandleXenditCallback)
-		}
+	// Webhook routes (public but secured by callback token)
+	// IMPORTANT: These routes must NOT have JWT middleware
+	// Security is handled by validating the x-callback-token header
+	webhookRoutes := r.Group("/webhooks")
+	{
+		webhookRoutes.POST("/xendit", webhookController.HandleXenditCallback)
 	}
 
 	// Protected routes - require authentication
-	protected := r.Group("/api")
+	protected := r.Group("")
 	protected.Use(middleware.AuthMiddleware())
 	{
 		// Example: User routes (authenticated users only)
