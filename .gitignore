@@ -17,6 +17,10 @@ build/
 *.so
 *.dylib
 
+# Go binaries
+backend/api
+api
+
 # Test binary, built with `go test -c`
 *.test
 

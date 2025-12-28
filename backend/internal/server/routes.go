@@ -37,7 +37,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 	}))
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "https://absolut-cinema.vercel.app"},
+		AllowOrigins: []string{
+			"http://localhost:5173",                           // Local development
+			"https://absolut-cinema.vercel.app",               // Vercel (legacy)
+			"https://absolut-cinema-umwih.ondigitalocean.app", // DigitalOcean frontend
+		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowHeaders:     []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,

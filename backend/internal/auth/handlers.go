@@ -360,6 +360,12 @@ func setAuthCookies(c *gin.Context, accessToken, refreshToken string) {
 	// Determine if we're in production (for Secure flag)
 	isProduction := strings.ToLower(os.Getenv("APP_ENV")) == "production"
 
+	// Use SameSite=Lax for both local dev and production
+	// This works because frontend and backend are now on the same domain:
+	// - Local: both on localhost
+	// - Production: both on absolut-cinema-umwih.ondigitalocean.app
+	c.SetSameSite(http.SameSiteLaxMode)
+
 	// Set access token cookie
 	c.SetCookie(
 		"access_token",                          // name
@@ -370,9 +376,6 @@ func setAuthCookies(c *gin.Context, accessToken, refreshToken string) {
 		isProduction,                            // secure (HTTPS only in production)
 		true,                                    // httpOnly
 	)
-
-	// Set SameSite for access token
-	c.SetSameSite(http.SameSiteLaxMode)
 
 	// Set refresh token cookie
 	c.SetCookie(
@@ -389,6 +392,9 @@ func setAuthCookies(c *gin.Context, accessToken, refreshToken string) {
 // clearAuthCookies clears authentication cookies
 func clearAuthCookies(c *gin.Context) {
 	isProduction := strings.ToLower(os.Getenv("APP_ENV")) == "production"
+
+	// Use same SameSite policy as when setting cookies
+	c.SetSameSite(http.SameSiteLaxMode)
 
 	c.SetCookie(
 		"access_token",
