@@ -88,40 +88,55 @@ const SeatSelection: React.FC = () => {
   };
 
   const handleCheckout = async () => {
+    // 1. Validasi kursi
     const selectedSeats = seats.filter(s => s.status === 'selected');
     if (selectedSeats.length === 0) return;
 
+    // 2. Validasi data showtime (Menghindari error "possibly null")
+    if (!showtime) {
+        alert("Showtime data is missing. Please refresh.");
+        return;
+    }
+
     setProcessing(true);
     try {
-      const payload = {
-        showtime_id: Number(showtimeId),
-        seat_numbers: selectedSeats.map(s => s.id)
-      };
+        const payload = {
+            showtime_id: Number(showtimeId),
+            seat_numbers: selectedSeats.map(s => s.id)
+        };
 
-      const response = await api.post('/bookings', payload);
-      const { payment_url } = response.data;
+        const response = await api.post('/bookings', payload);
+        const { payment_url } = response.data;
 
-      if (payment_url) {
-        window.location.href = payment_url;
-      } else {
-        alert("Booking created, but no payment link returned?");
-      }
+        if (payment_url) {
+            // --- BAGIAN PENTING: SIMPAN SNAPSHOT DATA ---
+            // Kita sudah aman menggunakan showtime.movie karena cek di atas
+            const bookingSnapshot = {
+                movieTitle: showtime.movie.title,
+                studioName: showtime.studio.name,
+                seats: selectedSeats.map(s => s.id).sort().join(", "),
+                startTime: showtime.start_time,
+                // Mengambil ID dari respons (sesuaikan dengan struktur JSON backend Anda)
+                bookingId: response.data?.data?.id || response.data?.id || "N/A"
+            };
+            
+            // Simpan ke localStorage
+            localStorage.setItem('last_successful_booking', JSON.stringify(bookingSnapshot));
+            // --------------------------------------------
+
+            // Pindah ke halaman pembayaran Xendit
+            window.location.href = payment_url;
+        } else {
+            alert("Booking created, but no payment link returned?");
+        }
 
     } catch (error: any) {
-      console.error("Booking failed:", error);
-      if (error.response?.status === 401) {
-        alert("You need to login first!");
-        navigate('/login');
-      } else if (error.response?.status === 409) {
-        alert("Someone just stole your seat! Refreshing...");
-        window.location.reload();
-      } else {
+        console.error("Booking failed:", error);
         alert("Booking failed: " + (error.response?.data?.error || "Unknown error"));
-      }
     } finally {
-      setProcessing(false);
+        setProcessing(false);
     }
-  };
+};
 
   if (loading || !showtime) return <div className="text-white p-10 text-center">Loading Cinema...</div>;
 

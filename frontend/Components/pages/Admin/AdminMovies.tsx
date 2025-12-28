@@ -61,7 +61,7 @@ const AdminMovies: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (window.confirm("Are you sure you want to delete this movie?")) {
       try {
-        await api.delete(`/movies/${id}`);
+        await api.delete(`admin/movies/${id}`);
         setMovies(movies.filter(m => m.id !== id));
       } catch (err) {
         alert("Failed to delete movie.");

@@ -1,31 +1,33 @@
 import React from "react";
-import DashboardLayout from "./DashboardLayout"; // Make sure you renamed the file!
+import DashboardLayout from "./DashboardLayout";
 import MovieGrid from "./MovieGrid";
 import ShowtimeSelection from "./ShowtimeSelection";
 import SeatSelection from "./SeatSelection";
 import PaymentSuccess from "./PaymentSuccess";
 
+
+// 1. Rute Dashboard (Tetap seperti biasa)
 export const dashboardRoutes = {
   path: '/dashboard',
   element: <DashboardLayout />,
   children: [
     {
-      index: true, // This means /dashboard shows this
+      index: true,
       element: <MovieGrid />
     },
     {
-      path: 'movie/:movieId', // /dashboard/movie/1
+      path: 'movie/:movieId',
       element: <ShowtimeSelection />
     },
     {
-      path: 'booking/:showtimeId', // /dashboard/booking/55
+      path: 'booking/:showtimeId',
       element: <SeatSelection />
-    },
-    {
-      path: 'payment-success',
-      element: <PaymentSuccess />
     }
   ]
 };
 
-export default dashboardRoutes;
+export const successRoute = {
+  path: 'booking/success', 
+  element: <PaymentSuccess />
+};
+
